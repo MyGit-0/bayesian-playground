@@ -3,8 +3,8 @@ import { InlineMath, BlockMath } from '../components/Maths';
 import { CodeBlock } from '../components/CodeBlock';
 import { BetaBinomialUpdater } from '../components/BetaBinomialUpdater';
 
-const BAYES_THEOREM_FORMULA = `P(\\theta \\mid D) = \\frac{P(D \\mid \\theta)\\; P(\\theta)}{P(D)}`;
-const EVIDENCE_INTEGRAL = `P(D) = \\int P(D \\mid \\theta)\\; P(\\theta)\\; d\\theta`;
+const BAYES_THEOREM_FORMULA = `P(\\theta \\mid D, M) = \\frac{P(D \\mid \\theta, M)\\; P(\\theta)}{P(D \\mid M)}`;
+const EVIDENCE_INTEGRAL = `P(D \\mid M) = \\int P(D \\mid \\theta, M)\\; P(\\theta)\\; d\\theta`;
 const CONJUGATE_NORMAL_MU = `\\mu_{\\text{post}} = \\frac{\\mu_0/\\sigma_0^2 + n\\bar{x}/\\sigma^2}{1/\\sigma_0^2 + n/\\sigma^2}`;
 const CONJUGATE_NORMAL_SIGMA = `\\frac{1}{\\sigma_{\\text{post}}^2} = \\frac{1}{\\sigma_0^2} + \\frac{n}{\\sigma^2}`;
 
@@ -36,33 +36,6 @@ print(f"True value: mu = {true_mu}")
 # Notice: even with a vague prior (sigma_0=5), 20 data points pull
 # the posterior very close to the true value.`;
 
-const GENERATIVE_CODE = `import numpy as np
-import matplotlib.pyplot as plt
-
-rng = np.random.default_rng(0)
-
-# ---------- Step 1: Sample parameters from the PRIOR ----------
-n_simulations = 1000
-log_mu_samples  = rng.normal(0, 1, size=n_simulations)   # log-mean
-obs_noise_samples = np.abs(rng.normal(0, 1, size=n_simulations))  # sigma
-
-# ---------- Step 2: For each parameter draw, simulate data ----------
-simulated_durations = []
-for log_mu, sigma in zip(log_mu_samples, obs_noise_samples):
-    # Each simulation produces one "fake" dataset of 80 patients
-    fake_data = rng.lognormal(mean=log_mu, sigma=sigma, size=80)
-    simulated_durations.append(fake_data.mean())
-
-# ---------- Step 3: Inspect the prior predictive distribution ----------
-plt.hist(simulated_durations, bins=50, density=True, alpha=0.7)
-plt.xlabel("Simulated mean duration (months)")
-plt.title("Prior Predictive: What does our model expect before seeing data?")
-plt.axvline(50, color="red", linestyle="--", label="Implausible: 50 months")
-plt.legend()
-plt.show()
-
-# If you see simulated means > 40 months, your prior is too vague!`;
-
 const CONJUGATE_TABLE = [
     { prior: 'Beta(α, β)', likelihood: 'Bernoulli(p)', posterior: 'Beta(α + successes, β + failures)', use: 'Clinical trial recovery rate' },
     { prior: 'Normal(μ₀, σ₀)', likelihood: 'Normal(μ, σ²) — known σ', posterior: 'Normal(μ_post, σ_post)', use: 'Estimating mean duration (our case)' },
@@ -76,39 +49,54 @@ export function ChapterMindset() {
 
             {/* Intro */}
             <section className="space-y-5">
+                <h3 className="text-2xl font-bold text-slate-800">About this website</h3>
+                <p className="text-[17px] text-slate-600 leading-[1.85]">
+                    This guide is designed to give a practical, intuitive introduction to Bayesian inference and the Bayesian workflow. 
+                    The following pages will walk you through the main steps of a Bayesian workflow, from defining a model to fitting it with MCMC and checking its predictions.
+                    For every step of the process, there will be interactive elements to help you build intuition for working with priors, posteriors, and likelihoods.
+                </p>
+                <div className="p-5 bg-indigo-50/80 rounded-xl border border-indigo-100 text-slate-700 text-[15px] leading-relaxed">
+                    <strong>Working example:</strong> To explain the Bayesian workflow, we will model Long-Covid symptom durations. 
+                </div>
+            </section>
+            <section className="space-y-5">
                 <h3 className="text-2xl font-bold text-slate-800">What is Bayesian Inference?</h3>
                 <p className="text-[17px] text-slate-600 leading-[1.85]">
-                    This guide walks through the full <strong>Bayesian Workflow</strong> using a realistic
-                    Long-Covid symptom duration dataset as a running example. Unlike frequentist methods
-                    that produce point estimates and p-values, Bayesian inference produces a full
-                    <strong> posterior distribution</strong> over every unknown parameter — a complete
-                    picture of our uncertainty given the data and prior knowledge.
+                    Bayesian inference describes the process of fitting a probability model to a set of data 
+                    and summarizing the result by a probability distribution on the parameters of the model.
+                    The great advantage of Bayesian inference over frequentist methods is that it provides a 
+                    coherent framework for reasoning about uncertainty. 
+                    While frequentist methods produce point estimates and p-values, Bayesian inference produces a full
+                    <strong>posterior distribution</strong> over every unknown parameter, reflecting our uncertainty 
+                    about the parameter values given the data and prior knowledge.
                 </p>
                 <div className="p-5 bg-indigo-50/80 rounded-xl border border-indigo-100 text-slate-700 text-[15px] leading-relaxed">
                     <strong>Core insight:</strong> Bayesian inference is about consistently applying the
                     rules of probability to update beliefs. A prior encodes what we know before seeing data;
-                    the likelihood scores how well each parameter value explains the data; and the
+                    the likelihood shows how well each parameter value explains the data; and the
                     posterior combines both — it is the logically optimal update given our model.
                 </div>
             </section>
 
             {/* Bayes Theorem */}
             <section className="space-y-6 pt-6 border-t border-slate-100">
-                <h3 className="text-2xl font-bold text-slate-800">Bayes' Theorem — The Full Formula</h3>
+                <h3 className="text-2xl font-bold text-slate-800">The Bayes Theorem</h3>
                 <p className="text-[16px] text-slate-600 leading-relaxed">
-                    Every element of Bayes' theorem has a precise scientific meaning. The denominator —
-                    the <em>evidence</em> or <em>marginal likelihood</em> — is what makes exact Bayesian
-                    inference intractable for most real problems.
+                    The mathematical foundation of Bayesian inference is the Bayes theorem. 
+                    In the following, θ are the parameters we want to learn. D is the observed data. Every term is conditioned on our model M.
                 </p>
-
+                 <div className="p-5 bg-indigo-50/80 rounded-xl border border-indigo-100 text-slate-700 text-[15px] leading-relaxed">
+                    <strong>Reading the formula:</strong> P denotes a probability. During Bayesian modeling, this always refers to a probability distribution, not a singular value.  E.g. P(θ) is read as "probability of θ" 
+                    The vertical bar "|" is read as "given" or "conditional on".
+                </div>
                 <div className="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm space-y-6">
                     <BlockMath math={BAYES_THEOREM_FORMULA} />
                     <div className="grid md:grid-cols-4 gap-4 text-center text-sm">
                         {[
-                            { term: 'P(θ | D)', name: 'Posterior', color: 'indigo', desc: 'Updated belief about θ after observing data D' },
-                            { term: 'P(D | θ)', name: 'Likelihood', color: 'blue', desc: 'How probable is D given a specific value of θ?' },
-                            { term: 'P(θ)', name: 'Prior', color: 'emerald', desc: 'Our initial belief about θ before any data' },
-                            { term: 'P(D)', name: 'Evidence', color: 'amber', desc: 'Normalizing constant — the probability of D under all possible θ' },
+                            { term: 'P(θ | D, M)', name: 'Posterior', color: 'black', desc: 'The probability of our parameters θ given the observed data D and model M' },
+                            { term: 'P(D | θ, M)', name: 'Likelihood', color: 'black', desc: 'How probable is D given a specific value of θ and model M?' },
+                            { term: 'P(θ | M)', name: 'Prior', color: 'black', desc: 'Our initial belief about θ before any data, given model M' },
+                            { term: 'P(D | M)', name: 'Evidence', color: 'gray', desc: 'Normalizing constant — the probability of D under all possible θ and model M' },
                         ].map(c => (
                             <div key={c.name} className={`p-4 rounded-xl bg-${c.color}-50/80 border border-${c.color}-100`}>
                                 <div className={`font-mono text-xs mb-2 text-${c.color}-400`}>{c.term}</div>
@@ -117,8 +105,25 @@ export function ChapterMindset() {
                             </div>
                         ))}
                     </div>
+                <p className="text-[16px] text-slate-600 leading-relaxed">
+                    <strong>Prior P(θ | M):</strong> Our initial belief about the parameters before seeing any data, given the model M. This can be based on previous studies, expert knowledge, or be intentionally vague.
+                </p>
+                <p className="text-[16px] text-slate-600 leading-relaxed">
+                    <strong>Likelihood P(D | θ, M):</strong> The probability of observing the data D given specific parameter values θ and model M. This encodes how well the model explains the data for each θ.
+                </p>
+                <p className="text-[16px] text-slate-600 leading-relaxed">
+                     <strong>Evidence P(D | M):</strong> The total probability of the data under the model, integrating over all possible parameter values. This acts as a normalizing constant to ensure the posterior is a valid probability distribution.
+                </p>
+                 <p className="text-[16px] text-slate-600 leading-relaxed">
+                     <strong>Posterior P(θ | D, M):</strong> Our updated belief about the parameters θ after seeing data D, given the model M. This is what we want to compute.
+                </p>
+                <p className="text-[16px] text-slate-600 leading-relaxed">
+                The denominator P(D | M) —
+                    the <em>evidence</em> or <em>marginal likelihood</em> — is what makes exact Bayesian
+                    inference intractable for most real problems.
+                </p>
                     <div className="p-4 bg-amber-50 rounded-xl border border-amber-100 space-y-2">
-                        <div className="text-sm font-semibold text-amber-800">Why is P(D) intractable?</div>
+                        <div className="text-sm font-semibold text-amber-800">Why is P(D | M) intractable?</div>
                         <BlockMath math={EVIDENCE_INTEGRAL} />
                         <p className="text-sm text-slate-600 leading-relaxed">
                             This requires integrating over <em>all possible values of θ</em> — a high-dimensional
@@ -134,9 +139,12 @@ export function ChapterMindset() {
             <section className="space-y-5 pt-6 border-t border-slate-100">
                 <h3 className="text-2xl font-bold text-slate-800">Interactive: Posterior Updating in Action</h3>
                 <p className="text-[16px] text-slate-600 leading-relaxed">
-                    The clearest way to see Bayes' theorem work is with a <strong>conjugate model</strong> where
-                    the update is instant and exact. Flip coins, observe clinical trial outcomes, or watch a
-                    diagnostic test — every observation sharpens the posterior.
+                    In the following, you can interactively see how the posterior distribution updates as you observe new data points.
+                    Before adding data, the posterior equals the prior. As you add data, the posterior shifts towards parameter values that better explain the observed data.
+                    Depending on how wide your prior is, it may take more or fewer data points for the posterior to concentrate around the true value. 
+                </p>
+                <p className="text-[16px] text-slate-600 leading-relaxed">
+                    Play around with different priors and data sequences to see how the Bayesian update works in practice!
                 </p>
                 <BetaBinomialUpdater />
             </section>
@@ -179,7 +187,7 @@ export function ChapterMindset() {
 
             {/* Generative Model */}
             <section className="space-y-6 pt-6 border-t border-slate-100">
-                <h3 className="text-2xl font-bold text-slate-800">What is a Generative Model?</h3>
+                <h3 className="text-2xl font-bold text-slate-800">Bayesian models are generative</h3>
                 <p className="text-[16px] text-slate-600 leading-relaxed">
                     Bayesian models are <strong>generative</strong>: they describe a forward process for
                     how data is created. You can always <em>simulate</em> data from a generative model
@@ -187,25 +195,6 @@ export function ChapterMindset() {
                     This is the key to <strong>Prior Predictive Checks</strong> — you simulate whole
                     datasets <em>before</em> seeing any real data to verify the model is scientifically sane.
                 </p>
-                <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-5 space-y-3">
-                    <div className="text-sm font-semibold text-slate-700">The generative process for our Long-Covid model:</div>
-                    <div className="space-y-2 text-sm text-slate-600">
-                        {[
-                            { step: '1', label: 'Sample log-mean from prior', math: '\\log\\mu \\sim \\mathcal{N}(0, 1)' },
-                            { step: '2', label: 'Sample noise from prior', math: '\\sigma_{\\text{obs}} \\sim \\text{HalfNormal}(1)' },
-                            { step: '3', label: 'Generate patient durations', math: 'x_i \\sim \\text{LogNormal}(\\log\\mu,\\; \\sigma_{\\text{obs}})' },
-                        ].map(item => (
-                            <div key={item.step} className="flex items-start gap-4 p-3 bg-white rounded-lg border border-slate-100">
-                                <span className="w-7 h-7 rounded-full bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">{item.step}</span>
-                                <div className="flex flex-col gap-1">
-                                    <span className="text-slate-600 text-xs font-medium">{item.label}</span>
-                                    <InlineMath math={item.math} />
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-                <CodeBlock code={GENERATIVE_CODE} title="Python – Simulating from the Generative Model" />
             </section>
 
             {/* Conjugate Priors */}
@@ -273,10 +262,10 @@ export function ChapterMindset() {
                 </p>
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     {[
-                        { icon: GitBranch, color: 'blue', label: '1. Define Model', desc: 'Specify priors and likelihood based on domain knowledge. Priors are hypotheses, not arbitrary choices.' },
-                        { icon: BarChart2, color: 'purple', label: '2. Prior Predictive', desc: 'Simulate data from the prior alone. Check that generated data is scientifically plausible.' },
-                        { icon: RefreshCw, color: 'indigo', label: '3. Fit & Diagnose', desc: 'Run MCMC. Check R̂ < 1.01, ESS > 400, no divergences. Only proceed if diagnostics pass.' },
-                        { icon: CheckSquare, color: 'emerald', label: '4. Posterior Predictive', desc: 'Simulate from the posterior. Does the model replicate real data patterns? If not, revise.' },
+                        { icon: GitBranch, color: 'black', label: '1. Define Model', desc: 'Specify priors and likelihood based on domain knowledge. Priors are hypotheses, not arbitrary choices.' },
+                        { icon: BarChart2, color: 'black', label: '2. Prior Predictive', desc: 'Simulate data from the prior alone. Check that generated data is scientifically plausible.' },
+                        { icon: RefreshCw, color: 'black', label: '3. Fit & Diagnose', desc: 'Run MCMC. Check R̂ < 1.01, ESS > 400, no divergences. Only proceed if diagnostics pass.' },
+                        { icon: CheckSquare, color: 'black', label: '4. Posterior Predictive', desc: 'Simulate from the posterior. Does the model replicate real data patterns? If not, revise.' },
                     ].map(({ icon: Icon, color, label, desc }) => (
                         <div key={label} className={`p-5 rounded-xl bg-${color}-50/70 border border-${color}-100`}>
                             <Icon className={`text-${color}-500 mb-3`} size={20} />
@@ -286,7 +275,34 @@ export function ChapterMindset() {
                     ))}
                 </div>
             </section>
+            
+            <section className="space-y-5">
+                <h3 className="text-2xl font-bold text-slate-800">Additional resources</h3>
+                <p className="text-[17px] text-slate-600 leading-[1.85]">
+                This website is supposed to provide a short overview with interactive elements to get an intuitive understanding of concepts relevant for Bayesian inference. It is not supposed to be a full coursebook or in-depth instruction manual. If you want to go deeper, here are some resources:
+                </p>
+                <ul>
+                    <li>Bayesian Statistics Course (with PyMC examples), <a href="https://areding.github.io/6420-pymc/intro.html">link</a></li>
+                    <li>"Bayesian Methods for Hackers" (online book with PyMC examples) <a href="https://github.com/CamDavidsonPilon/Probabilistic-Programming-and-Bayesian-Methods-for-Hackers">on Github</a></li>
+                    <li>"Bayesian Workflow" by Gelman, Vehtari et al. (2020), <a href="https://arxiv.org/abs/2011.01808">link</a></li>
+                    <li>PyMC Documentation, <a href="https://www.pymc.io/projects/docs/en/stable/">link</a></li>
+                    <li>Arviz Package for diagnostics and visualization of Bayesian models, <a href="https://python.arviz.org/en/stable/">link</a></li>
+                </ul>
+                
+            </section>
 
+            <section className="space-y-5">
+                <h3 className="text-2xl font-bold text-slate-800">Credits</h3>
+                <p className="text-[17px] text-slate-600 leading-[1.85]">
+                The source code for this website is available on <a href="https://github.com/Amirreza-0/bayesian-playground">GitHub</a>.
+                </p>
+                <p className="text-[17px] text-slate-600 leading-[1.85]">
+                Information found on this website is based on the sources mentioned in Additional Resources, as well as the author's own experience with Bayesian inference and PyMC. 
+                </p>
+                
+            </section>
         </div>
+
     );
 }
+
