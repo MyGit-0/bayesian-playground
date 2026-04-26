@@ -4,7 +4,7 @@ export function CalibrationPITVisual() {
             <div>
                 <h3 className="text-xl font-bold text-white mb-2">LOO-PIT Calibration (Probability Integral Transform)</h3>
                 <p className="text-slate-400 leading-relaxed">
-                    A perfect model doesn't just make accurate predictions; it accurately admits when it is uncertain. We use LOO-PIT (Leave-One-Out Probability Integral Transform) plots to check if a model's predictive distributions are calibrated.
+                    A useful predictive model should not only make accurate predictions; it should also admit uncertainty at the right scale. LOO-PIT (Leave-One-Out Probability Integral Transform) checks whether held-out observations fall inside the model's predictive distributions as often as they should.
                 </p>
             </div>
 

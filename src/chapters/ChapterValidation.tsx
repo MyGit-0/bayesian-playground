@@ -18,7 +18,7 @@ const DIAGNOSTICS_BAD = [
 const PITFALLS = [
     { num: '01', title: 'Skipping Prior Predictive Checks', severity: 'high', desc: 'If you never simulate from the prior, you may fit a model that can generate impossibly negative durations or durations of 500 years. Always check before fitting.' },
     { num: '02', title: 'Reporting Without Checking R̂ or ESS', severity: 'critical', desc: 'An R̂ > 1.01 means chains have not converged — the posterior is unreliable. Publishing such results is a serious scientific error. Check diagnostics before any inference.' },
-    { num: '03', title: 'Using Flat (Improper) Priors in Hierarchical Models', severity: 'high', desc: 'Flat priors (Uniform(−∞, +∞)) seem "objective" but cause numerical issues in hierarchical models. The variance component σ_pop cannot be identified with a flat prior.' },
+    { num: '03', title: 'Using Flat (Improper) Priors in Hierarchical Models', severity: 'high', desc: 'Flat priors (Uniform(−∞, +∞)) can seem "objective," but they are especially risky in hierarchical models. The variance component σ_pop often needs a weakly informative prior to stay identifiable and numerically stable.' },
     { num: '04', title: 'Confusing HDI with Confidence Interval', severity: 'medium', desc: '"The 95% CI contains the true value with 95% probability" is WRONG for frequentist CIs. Only a Bayesian HDI allows that statement.' },
     { num: '05', title: 'Not Accounting for Multiple Comparisons', severity: 'medium', desc: 'When comparing 10 hospitals simultaneously, a strictly frequentist analysis needs a Bonferroni or FDR correction. A full hierarchical model naturally regularizes estimates.' },
     { num: '06', title: 'Treating the Posterior as a Point Estimate', severity: 'medium', desc: 'Using just the posterior mean discards the entire uncertainty distribution. Always report the HDI to communicate what you do NOT know.' },
@@ -226,6 +226,10 @@ export function ChapterValidation() {
                     Before trusting any conclusion, you <strong>must</strong> verify that MCMC worked.
                     Two non-negotiable diagnostics are <InlineMath math="\hat{R}" /> (Gelman-Rubin) and
                     ESS (Effective Sample Size).
+                    These diagnostics do not prove the model is true; they tell you whether the sampler has
+                    produced a usable approximation to the posterior you asked for.
+                    Divergences are another warning: they often appear when parameters are highly correlated,
+                    weakly identified, or can trade off against each other in a difficult posterior geometry.
                 </p>
                 <div className="grid md:grid-cols-2 gap-4">
                     {[
@@ -292,6 +296,8 @@ export function ChapterValidation() {
                     Leave-One-Out Cross-Validation (LOO-CV), implemented via Pareto-Smoothed Importance Sampling
                     (PSIS-LOO), estimates out-of-sample predictive accuracy. The metric ELPD (Expected Log Predictive
                     Density) measures how well the model would predict a new, unseen patient. Higher ELPD = better model.
+                    Treat small differences cautiously: the standard error tells you whether the improvement is
+                    large enough to matter.
                 </p>
                 <BlockMath math={`\\text{ELPD}_{\\text{LOO}} = \\sum_{i=1}^n \\log p(y_i \\mid y_{-i}) \\approx \\sum_{i=1}^n \\log \\int p(y_i \\mid \\theta)\\, p(\\theta \\mid y_{-i})\\, d\\theta`} />
                 <IterativeModelComparison />
@@ -305,6 +311,8 @@ export function ChapterValidation() {
                     Does the fitted model, when used to simulate new data, produce data that resembles the real
                     observations? PPCs reveal systematic model misspecification — patterns in real data that
                     the model cannot replicate.
+                    They are most useful when you choose a clinically meaningful feature to check, such as the
+                    90th percentile duration or the fraction of long recoveries.
                 </p>
                 <CodeBlock code={PPC_CODE} title="PyMC + ArviZ – Posterior Predictive Check" />
             </section>
@@ -317,6 +325,8 @@ export function ChapterValidation() {
                     For a well-calibrated model, the Probability Integral Transform (PIT) of held-out observations
                     should be uniform. If it is U-shaped, the model is overconfident — its prediction intervals
                     are narrower than reality.
+                    If it is hump-shaped, the model is underconfident and its prediction intervals are wider
+                    than the data require.
                 </p>
                 <CalibrationPITVisual />
                 <CodeBlock code={LOO_PIT_CODE} title="ArviZ – LOO-PIT Calibration Diagnostic" />
@@ -329,6 +339,7 @@ export function ChapterValidation() {
                     PSIS-LOO provides a per-observation diagnostic: the Pareto-k value. Patients with
                     <InlineMath math=" k > 0.7 " /> are <em>influential</em> — the model struggles to
                     predict them, suggesting they may be outliers or that the model's tails are too thin.
+                    High Pareto-k is a prompt to inspect those observations, not an automatic reason to delete them.
                 </p>
                 <CodeBlock code={PARETO_CODE} title="ArviZ – Pareto-k: Identifying Influential Observations" />
             </section>

@@ -79,7 +79,7 @@ export function MCMCTraceViewer() {
                         </div>
                     </div>
                     <p className="text-slate-500 leading-relaxed font-sans">
-                        MCMC uses random walks to collect samples proportional to the posterior probability. R̂ (Gelman-Rubin) checks if multiple independent chains have stabilized to the same distribution. If R̂ &gt; 1.01, the chains have not converged — increase draws or reparameterize.
+                        MCMC uses random walks to collect samples proportional to the posterior probability. R̂ checks if multiple independent chains have stabilized to the same distribution, while ESS estimates how many independent draws the autocorrelated samples are worth. If R̂ &gt; 1.01, increase draws, simplify the model, or reparameterize.
                     </p>
                 </div>
             </div>

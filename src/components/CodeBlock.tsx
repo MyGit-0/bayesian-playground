@@ -1,5 +1,5 @@
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
+
+import { SyntaxHighlighter } from '../hooks/useSyntaxHighlighter'
 import { Code } from 'lucide-react';
 
 interface CodeBlockProps {
@@ -38,14 +38,12 @@ export function CodeBlock({ code, language = 'python', title }: CodeBlockProps) 
             {/* Code */}
             <div className="bg-[#1e2030] overflow-x-auto p-5">
                 <SyntaxHighlighter
+                    code={code.trim()}
                     language={language}
-                    style={oneDark}
                     customStyle={customStyle}
                     codeTagProps={{ style: codeTagStyle }}
-                    showLineNumbers={false}
                     wrapLongLines={false}
                 >
-                    {code.trim()}
                 </SyntaxHighlighter>
             </div>
         </div>

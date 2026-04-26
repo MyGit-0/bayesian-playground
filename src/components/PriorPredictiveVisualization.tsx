@@ -64,7 +64,7 @@ export function PriorPredictiveVisualization({ mu, sigma }: Props) {
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-8 mt-6 max-w-4xl mx-auto w-full">
             <div>
                 <h3 className="text-xl font-bold text-slate-800">Prior Predictive Checks (PPC)</h3>
-                <p className="text-slate-500 mt-1">If we simulate data using just our prior beliefs, what does the data look like? It reveals if our assumptions entail impossible realities.</p>
+                <p className="text-slate-500 mt-1">If we simulate data using just our prior beliefs, what does the data look like? This diagnostic reveals impossible or implausible assumptions before we fit the model.</p>
             </div>
 
             <div className="relative w-full aspect-[21/9] bg-slate-50 mt-4 rounded-xl overflow-hidden border border-slate-100 flex items-end">
@@ -109,7 +109,7 @@ export function PriorPredictiveVisualization({ mu, sigma }: Props) {
                 <div>
                     <p className="font-bold text-lg mb-1">{probNegative > 10 ? 'Prior entails impossible data!' : 'Prior looks structurally sound.'}</p>
                     <p className="text-sm opacity-90 leading-relaxed">
-                        Your current Prior settings result in simulated data where roughly <strong>~{probNegative}%</strong> of patients have a negative duration of Long-Covid (- months). This is physically impossible. You may need to tighten the standard deviation $\sigma$, shift the mean $\mu$, or switch to a bounded distribution (like LogNormal or Exponential) so the model knows negative durations are impossible!
+                        Under this unconstrained demonstration, roughly <strong>~{probNegative}%</strong> of simulated patients have a negative Long COVID duration. That is physically impossible. Tightening sigma, shifting mu, or using a positive distribution such as LogNormal teaches the model that negative durations cannot occur.
                     </p>
                 </div>
             </div>

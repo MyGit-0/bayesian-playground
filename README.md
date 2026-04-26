@@ -12,6 +12,8 @@ Built with React, TypeScript, Vite, Tailwind CSS, and Framer Motion.
 
 ## Setup & Running Locally
 
+> Note: the setup was tested using node `v24.14.0`, npm `v11.9.0`
+
 1. Install dependencies:
    ```bash
    npm install
@@ -26,7 +28,3 @@ Built with React, TypeScript, Vite, Tailwind CSS, and Framer Motion.
    ```bash
    npm run build
    ```
-
-## Debugging
-
-1. If `npm install` gives warnings, check if your `node` version matches the one in `package.json` -> `"engines"` section

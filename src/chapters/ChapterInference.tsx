@@ -168,6 +168,8 @@ export function ChapterInference({ priorMu, priorSigma, dataMu, setDataMu, dataS
                     When we observe data, Bayes' theorem combines the prior and likelihood to produce the
                     posterior. For Normal-Normal conjugate models the update is a <em>precision-weighted
                         average</em>. The posterior mean is pulled toward whichever distribution is narrower (more precise).
+                    Low-precision data often means few observations, noisy measurements, or heterogeneous patients;
+                    in that setting, the posterior should move cautiously instead of letting unreliable data dominate.
                 </p>
                 <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4">
                     <BlockMath math={`\\mu_{\\text{post}} = \\frac{\\mu_0/\\sigma_0^2 + \\bar{x}/\\sigma_D^2}{1/\\sigma_0^2 + 1/\\sigma_D^2}`} />
@@ -194,6 +196,8 @@ export function ChapterInference({ priorMu, priorSigma, dataMu, setDataMu, dataS
                     The posterior (indigo) is a precision-weighted compromise. When <InlineMath math="\sigma_D \to 0" /> (precise data),
                     the prior is overwhelmed and the posterior collapses onto the data mean.
                     When <InlineMath math="\sigma_D \gg \sigma_0" />, the posterior stays near the prior.
+                    This is useful when data is sparse or noisy: the prior still updates, but it is not erased by
+                    weak evidence.
                 </p>
                 <div className="grid md:grid-cols-2 gap-6 bg-slate-50 p-5 rounded-xl border border-slate-100">
                     <div className="space-y-3">
@@ -232,7 +236,7 @@ export function ChapterInference({ priorMu, priorSigma, dataMu, setDataMu, dataS
                 <p className="text-[16px] text-slate-600 leading-relaxed">
                     Not all MCMC is the same. PyMC offers several samplers, each suited to different
                     posterior geometries. The default NUTS is almost always the right choice for
-                    continuous parameters, but knowing the alternatives matters.
+                    continuous differentiable parameters, but knowing the alternatives matters.
                 </p>
                 <div className="flex flex-wrap gap-2">
                     {MCMC_ALGOS.map((a, i) => (
@@ -266,6 +270,8 @@ export function ChapterInference({ priorMu, priorSigma, dataMu, setDataMu, dataS
                         joint posterior of <InlineMath math="(\log\mu, \sigma_{\text{obs}})" />. Tune the step
                         size to see how it affects mixing and acceptance rate — too small = slow exploration,
                         too large = high rejection rate.
+                        We sample the whole posterior rather than only the highest point because uncertainty,
+                        parameter correlations, and posterior predictive checks all depend on the full distribution.
                     </p>
                     <MCMCSamplingVisualizer />
                 </div>
@@ -276,7 +282,8 @@ export function ChapterInference({ priorMu, priorSigma, dataMu, setDataMu, dataS
             <section className="space-y-6 pt-6 border-t border-slate-100">
                 <h3 className="text-2xl font-bold text-slate-800">3. Reading the Posterior Distribution</h3>
                 <p className="text-[16px] text-slate-600 leading-relaxed">
-                    The posterior is richer than a p-value. We summarize it using the
+                    The posterior is richer than a p-value because it keeps the whole range of plausible values,
+                    not only a yes/no test result. We summarize it using the
                     <strong> Highest Density Interval (HDI)</strong> — the narrowest interval containing
                     94% of posterior probability. Unlike a frequentist confidence interval, the HDI has
                     a direct probability statement: <em>"given our model and data, there is a 94%
@@ -337,10 +344,14 @@ export function ChapterInference({ priorMu, priorSigma, dataMu, setDataMu, dataS
                 <h3 className="text-2xl font-bold text-slate-800">4. Hierarchical Modeling (Partial Pooling)</h3>
                 <p className="text-[16px] text-slate-600 leading-relaxed">
                     Multi-level data (patients nested in hospitals) calls for a hierarchical model.
+                    Estimating every hospital separately makes small hospitals noisy; forcing all hospitals to
+                    share one estimate hides real differences.
                     Each hospital has a parameter <InlineMath math="\log\mu_h" /> drawn from a shared
                     population distribution <InlineMath math="\mathcal{N}(\mu_{\text{pop}}, \sigma_{\text{pop}})" />.
                     This is <strong>partial pooling</strong>: hospitals with little data borrow strength
                     from the population; hospitals with lots of data keep their own estimates.
+                    The key assumption is exchangeability: hospitals are related enough to learn from a shared
+                    distribution, but not identical.
                 </p>
                 <HierarchicalModelingVisual />
                 <CodeBlock code={HIER_CODE} title="PyMC – Complete Hierarchical Model (runnable)" />

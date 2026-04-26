@@ -90,6 +90,7 @@ export function BetaBinomialUpdater() {
                 <p className="text-sm text-slate-500 leading-relaxed">
                     Flip coins, run clinical trials, observe successes. Watch the posterior update in real time.
                     <strong className="text-slate-700"> The Beta prior + Binomial likelihood = Beta posterior.</strong>
+                    After k successes in n trials, Beta(α, β) becomes Beta(α + k, β + n − k).
                 </p>
             </div>
 
