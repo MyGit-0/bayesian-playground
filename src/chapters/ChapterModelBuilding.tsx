@@ -105,9 +105,10 @@ export function ChapterModelBuilding({ priorMu, setPriorMu, priorSigma, setPrior
                 <h3 className="text-2xl font-bold text-slate-800">1. Defining the Generative Story</h3>
                 <p className="text-[17px] text-slate-600 leading-[1.85]">
                     A Bayesian model is a mathematical story of how the observed data came to exist.
-                    For our Long-Covid study, we model individual patient symptom durations as draws
+                    For our Long COVID-style study, we model individual patient symptom durations as draws
                     from a <strong>LogNormal distribution</strong> whose log-scale mean and variance are
-                    themselves uncertain parameters.
+                    themselves uncertain parameters. The dataset here is synthetic, but it is shaped to
+                    behave like a plausible duration study.
                 </p>
                 <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4">
                     <div className="text-sm font-semibold text-slate-700">Our model in mathematical notation:</div>
@@ -132,6 +133,8 @@ export function ChapterModelBuilding({ priorMu, setPriorMu, priorSigma, setPrior
                     The likelihood must match the <em>nature</em> of your outcome variable.
                     One of the most common modeling errors is using a Normal distribution when the
                     outcome is strictly positive — this incorrectly allows negative predictions.
+                    Distribution choice is not just technical; it encodes what outcomes the model believes
+                    are possible.
                 </p>
                 <div className="overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
                     <table className="w-full text-sm">
@@ -186,6 +189,7 @@ export function ChapterModelBuilding({ priorMu, setPriorMu, priorSigma, setPrior
                 <p className="text-[16px] text-slate-600 leading-relaxed">
                     A prior on the <em>log-mean</em> <InlineMath math="\log\mu \sim \mathcal{N}(0, 1)" /> translates
                     to a prior on the median duration of <InlineMath math="\exp(\log\mu)" />.
+                    We put the prior on the log scale because raw symptom duration must stay positive.
                     When <InlineMath math="\log\mu = 0" />, median duration = 1 month.
                     When <InlineMath math="\log\mu = 1.1" />, median ≈ 3 months.
                     Adjust the sliders below to explore how the prior shape changes.
@@ -207,6 +211,8 @@ export function ChapterModelBuilding({ priorMu, setPriorMu, priorSigma, setPrior
                     Before any real data is observed, simulate complete datasets from the prior.
                     If the model generates durations of −50 months or 200 years, the prior is
                     misspecified and must be revised. This is <strong>Step 2 of the Bayesian Workflow</strong>.
+                    For the final LogNormal model, negative durations are structurally impossible; the check
+                    still matters because it can reveal implausibly huge durations or overly vague assumptions.
                 </p>
                 <CodeBlock code={PRIOR_PRED_CODE} title="PyMC + ArviZ – Prior Predictive Sampling" />
             </section>

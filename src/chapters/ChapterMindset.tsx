@@ -6,7 +6,7 @@ import { BetaBinomialUpdater } from '../components/BetaBinomialUpdater';
 const BAYES_THEOREM_FORMULA = `P(\\theta \\mid D, M) = \\frac{P(D \\mid \\theta, M)\\; P(\\theta)}{P(D \\mid M)}`;
 const EVIDENCE_INTEGRAL = `P(D \\mid M) = \\int P(D \\mid \\theta, M)\\; P(\\theta)\\; d\\theta`;
 const CONJUGATE_NORMAL_MU = `\\mu_{\\text{post}} = \\frac{\\mu_0/\\sigma_0^2 + n\\bar{x}/\\sigma^2}{1/\\sigma_0^2 + n/\\sigma^2}`;
-const CONJUGATE_NORMAL_SIGMA = `\\frac{1}{\\sigma_{\\text{post}}^2} = \\frac{1}{\\sigma_0^2} + \\frac{n}{\\sigma^2}`;
+const CONJUGATE_NORMAL_SIGMA = `\\sigma_{\\text{post}}^2 = \\left(\\frac{1}{\\sigma_0^2} + \\frac{n}{\\sigma^2}\\right)^{-1}`;
 
 const CONJUGATE_SIM_CODE = `import numpy as np
 
@@ -56,7 +56,7 @@ export function ChapterMindset() {
                     For every step of the process, there will be interactive elements to help you build intuition for working with priors, posteriors, and likelihoods.
                 </p>
                 <div className="p-5 bg-indigo-50/80 rounded-xl border border-indigo-100 text-slate-700 text-[15px] leading-relaxed">
-                    <strong>Working example:</strong> To explain the Bayesian workflow, we will model Long-Covid symptom durations. 
+                    <strong>Working example:</strong> To explain the Bayesian workflow, we will model realistic synthetic Long COVID symptom durations.
                 </div>
             </section>
             <section className="space-y-5">
@@ -145,6 +145,8 @@ export function ChapterMindset() {
                 </p>
                 <p className="text-[16px] text-slate-600 leading-relaxed">
                     Play around with different priors and data sequences to see how the Bayesian update works in practice!
+                    This example is conjugate: a Beta prior and Binomial data produce another Beta distribution,
+                    so the update is exact and easy to see.
                 </p>
                 <BetaBinomialUpdater />
             </section>
@@ -194,7 +196,27 @@ export function ChapterMindset() {
                     by sampling parameters from the prior and then sampling data from the likelihood.
                     This is the key to <strong>Prior Predictive Checks</strong> — you simulate whole
                     datasets <em>before</em> seeing any real data to verify the model is scientifically sane.
+                    In this example, we model duration on the log scale so simulated durations remain positive
+                    after we transform back to months.
                 </p>
+                <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-5 space-y-3">
+                    <div className="text-sm font-semibold text-slate-700">The generative process for our Long COVID model:</div>
+                    <div className="space-y-2 text-sm text-slate-600">
+                        {[
+                            { step: '1', label: 'Sample log-mean from prior', math: '\\log\\mu \\sim \\mathcal{N}(0, 1)' },
+                            { step: '2', label: 'Sample noise from prior', math: '\\sigma_{\\text{obs}} \\sim \\text{HalfNormal}(1)' },
+                            { step: '3', label: 'Generate patient durations', math: 'x_i \\sim \\text{LogNormal}(\\log\\mu,\\; \\sigma_{\\text{obs}})' },
+                        ].map(item => (
+                            <div key={item.step} className="flex items-start gap-4 p-3 bg-white rounded-lg border border-slate-100">
+                                <span className="w-7 h-7 rounded-full bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">{item.step}</span>
+                                <div className="flex flex-col gap-1">
+                                    <span className="text-slate-600 text-xs font-medium">{item.label}</span>
+                                    <InlineMath math={item.math} />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
             </section>
 
             {/* Conjugate Priors */}
@@ -208,9 +230,9 @@ export function ChapterMindset() {
                 </p>
                 <div className="grid md:grid-cols-2 gap-4">
                     <div className="bg-white p-6 rounded-xl border border-slate-200 space-y-3 shadow-sm">
-                        <div className="text-sm font-semibold text-slate-700">Posterior precision (reciprocal variance):</div>
+                        <div className="text-sm font-semibold text-slate-700">Posterior variance:</div>
                         <BlockMath math={CONJUGATE_NORMAL_SIGMA} />
-                        <p className="text-xs text-slate-500 leading-relaxed">The posterior precision is the sum of prior precision and data precision.</p>
+                        <p className="text-xs text-slate-500 leading-relaxed">As the prior or data become more precise, posterior variance shrinks.</p>
                     </div>
                     <div className="bg-white p-6 rounded-xl border border-slate-200 space-y-3 shadow-sm">
                         <div className="text-sm font-semibold text-slate-700">Posterior mean (precision-weighted average):</div>
@@ -264,7 +286,7 @@ export function ChapterMindset() {
                     {[
                         { icon: GitBranch, color: 'black', label: '1. Define Model', desc: 'Specify priors and likelihood based on domain knowledge. Priors are hypotheses, not arbitrary choices.' },
                         { icon: BarChart2, color: 'black', label: '2. Prior Predictive', desc: 'Simulate data from the prior alone. Check that generated data is scientifically plausible.' },
-                        { icon: RefreshCw, color: 'black', label: '3. Fit & Diagnose', desc: 'Run MCMC. Check R̂ < 1.01, ESS > 400, no divergences. Only proceed if diagnostics pass.' },
+                        { icon: RefreshCw, color: 'black', label: '3. Fit & Diagnose', desc: 'Run MCMC. R̂ checks whether chains agree, ESS checks how many useful draws you have, and divergences warn that the sampler struggled with posterior geometry.' },
                         { icon: CheckSquare, color: 'black', label: '4. Posterior Predictive', desc: 'Simulate from the posterior. Does the model replicate real data patterns? If not, revise.' },
                     ].map(({ icon: Icon, color, label, desc }) => (
                         <div key={label} className={`p-5 rounded-xl bg-${color}-50/70 border border-${color}-100`}>
@@ -305,4 +327,3 @@ export function ChapterMindset() {
 
     );
 }
-

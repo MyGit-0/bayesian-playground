@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 export function HierarchicalModelingVisual() {
     const [poolingType, setPoolingType] = useState<'complete' | 'no' | 'partial'>('partial');
 
-    // Faux data for 4 hospitals mapping out "Long-Covid Recovery Time"
+    // Faux data for 4 hospitals mapping out "Long COVID Recovery Time"
     // Hospital 1 has lots of data, Hospital 4 has very little data.
     const groups = [
         { id: 'H1', name: 'Hospital A', n: 50, avg: 3.2 },
@@ -58,7 +58,7 @@ export function HierarchicalModelingVisual() {
                     )}
                     {poolingType === 'no' && (
                         <p className="text-slate-600 animate-in fade-in duration-300">
-                            <strong>No Pooling</strong> treats every hospital independently. It perfectly fits Hospital D's extreme 6.5 month outage, but Hospital D only has 3 patients! This severely overfits to noise in small sample sizes.
+                            <strong>No Pooling</strong> treats every hospital independently. It perfectly fits Hospital D's extreme 6.5 month average, but Hospital D only has 3 patients. This severely overfits to noise in small sample sizes.
                         </p>
                     )}
                     {poolingType === 'partial' && (

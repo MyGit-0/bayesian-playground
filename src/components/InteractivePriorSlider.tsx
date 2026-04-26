@@ -120,7 +120,7 @@ export function InteractivePriorSlider({ mu, sigma, onChange, title = "Prior Dis
                         className="w-full accent-indigo-600 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
                     />
                     <div className="flex justify-between text-xs text-slate-400">
-                        <span>Tight (Cocksure)</span>
+                        <span>Tight (confident)</span>
                         <span>Wide (Uncertain)</span>
                     </div>
                 </div>

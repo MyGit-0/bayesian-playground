@@ -29,9 +29,11 @@ export function IterativeModelComparison() {
                             <div className="w-full max-w-md relative h-32 border-l-2 border-b-2 border-slate-300">
                                 <div className="absolute bottom-[-24px] right-0 text-xs text-slate-500">Patient Age</div>
                                 <div className="absolute top-0 left-[-20px] -rotate-90 text-xs text-slate-500 origin-bottom-left">Duration</div>
-                                {/* Flat constant line */}
-                                <div className="absolute top-1/2 left-0 right-0 h-1 bg-blue-500 rounded-full shadow-lg shadow-blue-500/20"></div>
-                                <div className="absolute top-1/2 left-1/4 w-full h-8 bg-blue-200/50 -translate-y-1/2 rounded blur-sm"></div>
+                                {/* Flat constant line with uncertainty band */}
+                                <div className="absolute top-1/2 left-0 right-0 h-8 -translate-y-1/2">
+                                    <div className="absolute left-0 right-0 top-1/2 h-8 -translate-y-1/2 bg-blue-200/50 rounded blur-sm"></div>
+                                    <div className="absolute left-0 right-0 top-1/2 h-1 -translate-y-1/2 bg-blue-500 rounded-full shadow-lg shadow-blue-500/20"></div>
+                                </div>
                             </div>
                         </div>
                         <div className="bg-emerald-50 text-emerald-800 p-4 rounded-lg flex items-start gap-3 border border-emerald-100">
@@ -42,14 +44,16 @@ export function IterativeModelComparison() {
                 ) : (
                     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
                         <h3 className="text-xl font-bold">The Demographic Trend Model</h3>
-                        <p className="text-slate-600">Accounts for varying baseline duration depending on Patient Age and prior health conditions.</p>
+                        <p className="text-slate-600">Accounts for varying baseline duration depending on Patient Age and prior health conditions. The line is a schematic posterior predictive trend: older or higher-risk patients are expected to have longer durations on average.</p>
                         <div className="bg-slate-50 rounded-lg p-6 border border-slate-200 flex justify-center py-12">
                             <div className="w-full max-w-md relative h-32 border-l-2 border-b-2 border-slate-300">
                                 <div className="absolute bottom-[-24px] right-0 text-xs text-slate-500">Patient Age</div>
                                 <div className="absolute top-0 left-[-20px] -rotate-90 text-xs text-slate-500 origin-bottom-left">Duration</div>
-                                {/* Upward trend line */}
-                                <div className="absolute bottom-4 left-0 w-[110%] h-1 bg-indigo-500 rounded-full shadow-lg shadow-indigo-500/20 origin-left -rotate-12"></div>
-                                <div className="absolute bottom-4 left-0 w-[110%] h-12 bg-indigo-200/50 rounded origin-left -rotate-12 blur-sm -translate-y-6"></div>
+                                {/* Upward trend line with uncertainty band */}
+                                <div className="absolute bottom-4 left-0 w-[110%] h-12 origin-left -rotate-12">
+                                    <div className="absolute left-0 right-0 top-1/2 h-12 -translate-y-1/2 bg-indigo-200/50 rounded blur-sm"></div>
+                                    <div className="absolute left-0 right-0 top-1/2 h-1 -translate-y-1/2 bg-indigo-500 rounded-full shadow-lg shadow-indigo-500/20"></div>
+                                </div>
                             </div>
                         </div>
                         <div className="bg-emerald-50 text-emerald-800 p-4 rounded-lg flex items-start gap-3 border border-emerald-100">
@@ -58,7 +62,7 @@ export function IterativeModelComparison() {
                             </div>
                             <div className="font-mono bg-white px-2 py-0.5 rounded border border-emerald-200">-850.2</div>
                         </div>
-                        <p className="text-sm text-slate-500 italic mt-2">A higher LOO score means this model generalizes better to unseen data, proving that adding demographic predictors was a mathematically sound decision rather than just overfitting.</p>
+                        <p className="text-sm text-slate-500 italic mt-2">A higher LOO score suggests this model generalizes better to unseen data, so adding demographic predictors improved prediction rather than merely fitting noise.</p>
                     </div>
                 )}
             </div>

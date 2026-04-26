@@ -146,6 +146,8 @@ export function MCMCSamplingVisualizer() {
                     <strong> (log_mu, σ_obs)</strong>. The heat map shows the unnormalized posterior density.
                     Dots are chain positions (including repeats from rejected proposals); the yellow path shows the chain trajectory.
                     The posterior peak may differ from the true parameters due to prior regularization and finite-sample noise.
+                    At each step, the sampler proposes a nearby point, accepts it if it improves posterior density,
+                    and sometimes accepts worse points so it can still explore uncertainty.
                 </p>
             </div>
 
@@ -260,6 +262,7 @@ export function MCMCSamplingVisualizer() {
                 </div>
                 <div className="text-xs text-slate-400 bg-slate-50 rounded-lg px-4 py-3 border border-slate-100 leading-relaxed space-y-1">
                     <p><strong className="text-slate-600">📋 Workflow reminder:</strong> In practice, always run <strong>prior predictive checks</strong> before sampling, and check <strong>R̂ &lt; 1.01</strong> and <strong>ESS &gt; 400/chain</strong> before trusting results.</p>
+                    <p><strong className="text-slate-600">Acceptance rate:</strong> Very low means proposals are too aggressive and often rejected; very high means steps may be too timid and exploration can be slow.</p>
                     <p><strong className="text-slate-600">🔄 Iterative approach:</strong> Start with a simple model, verify it works, then add complexity one piece at a time — this makes debugging far easier than building a complex model all at once.</p>
                 </div>
             </div>
