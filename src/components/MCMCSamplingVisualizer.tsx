@@ -105,7 +105,7 @@ export function MCMCSamplingVisualizer() {
     const [seed, setSeed] = useState(42);
     const [acceptance, setAcceptance] = useState<number | null>(null);
 
-    const grid = useMemo(buildContourGrid, []);
+    const grid = useMemo(() => buildContourGrid(), []);
     const cellW = W / GRID_STEPS, cellH = H / GRID_STEPS;
 
     const runSampler = useCallback(() => {

@@ -8,10 +8,11 @@ export default defineConfig({
   plugins: [
     react(), 
     tailwindcss(),
-    visualizer({          // Add this last
-      open: true,         // Auto-open browser
-      gzipSize: true,     // Show gzip sizes
-      brotliSize: true,   // Show brotli sizes
+    visualizer({
+      filename: 'dist/stats.html',
+      open: false,
+      gzipSize: true,
+      brotliSize: true,
     })
   ],
   build: {

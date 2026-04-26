@@ -49,6 +49,13 @@ const PRESETS = [
     { label: 'Informed (~40%)', a: 4, b: 6 },
 ];
 
+const STAT_TEXT_CLASS: Record<string, string> = {
+    slate: 'text-slate-600',
+    emerald: 'text-emerald-600',
+    red: 'text-red-600',
+    indigo: 'text-indigo-600',
+};
+
 export function BetaBinomialUpdater() {
     const [priorPreset, setPriorPreset] = useState(0);
     const [observations, setObservations] = useState<boolean[]>([]);
@@ -161,7 +168,7 @@ export function BetaBinomialUpdater() {
                         <AnimatePresence mode="popLayout">
                             <motion.div key={String(s.value)}
                                 initial={{ y: -10, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
-                                className={`text-2xl font-bold text-${s.color}-600 tabular-nums`}>
+                                className={`text-2xl font-bold ${STAT_TEXT_CLASS[s.color]} tabular-nums`}>
                                 {s.value}
                             </motion.div>
                         </AnimatePresence>

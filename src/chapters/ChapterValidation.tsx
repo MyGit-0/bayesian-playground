@@ -42,7 +42,7 @@ az.plot_trace(idata, var_names=["log_mu", "obs_noise"])
 
 # --- Energy check (BFMI) ---
 az.plot_energy(idata)
-# BFMI > 0.3 is healthy; lower values suggest posterior geometry problems
+# BFMI > 0.3 is a useful rule of thumb; lower values suggest posterior geometry problems
 
 # --- Divergence count ---
 n_div = idata.sample_stats.diverging.sum().item()
@@ -54,8 +54,10 @@ import arviz as az
 
 # --- Compute LOO for the baseline model ---
 with long_covid_model:
-    idata_base = pm.sample(draws=2000, tune=1000, chains=4, random_seed=42)
-    pm.compute_log_likelihood(idata_base)  # required for LOO
+    idata_base = pm.sample(
+        draws=2000, tune=1000, chains=4, target_accept=0.9,
+        random_seed=42, idata_kwargs={"log_likelihood": True}
+    )
 
 loo_base = az.loo(idata_base, pointwise=True)
 
@@ -69,8 +71,10 @@ with pm.Model() as model_with_age:
     mu_i     = log_mu + beta_age * age_z
     obs      = pm.LogNormal("obs", mu=mu_i, sigma=sigma,
                             observed=clinical_data)
-    idata_age = pm.sample(draws=2000, tune=1000, chains=4, random_seed=42)
-    pm.compute_log_likelihood(idata_age)
+    idata_age = pm.sample(
+        draws=2000, tune=1000, chains=4, target_accept=0.9,
+        random_seed=42, idata_kwargs={"log_likelihood": True}
+    )
 
 loo_age = az.loo(idata_age, pointwise=True)
 
@@ -91,8 +95,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 with long_covid_model:
-    ppc = pm.sample_posterior_predictive(idata, var_names=["obs"],
-                                          random_seed=42)
+    idata = pm.sample_posterior_predictive(
+        idata,
+        var_names=["obs"],
+        extend_inferencedata=True,
+        random_seed=42,
+    )
 
 fig, axes = plt.subplots(1, 2, figsize=(12, 4))
 
@@ -102,7 +110,7 @@ az.plot_ppc(idata, group="posterior", ax=axes[0],
 axes[0].set_title("PPC: Simulated vs Observed Durations")
 
 # 2. Test statistic: 90th percentile (checking tail behaviour)
-ppc_draws = ppc.posterior_predictive["obs"].values.reshape(-1, 80)
+ppc_draws = idata.posterior_predictive["obs"].values.reshape(-1, 80)
 ppc_90th  = np.percentile(ppc_draws, 90, axis=1)
 obs_90th  = np.percentile(clinical_data, 90)
 
@@ -120,8 +128,15 @@ plt.show()
 bayesian_p = (ppc_90th > obs_90th).mean()
 print(f"Bayesian p-value (90th pct): {bayesian_p:.2f}")`;
 
-const LOO_PIT_CODE = `import arviz as az
+const LOO_PIT_CODE = `import pymc as pm
+import arviz as az
 import matplotlib.pyplot as plt
+
+# Requires an InferenceData with both log_likelihood and posterior_predictive groups.
+# If needed, run:
+# with long_covid_model:
+#     pm.compute_log_likelihood(idata, extend_inferencedata=True)
+#     idata = pm.sample_posterior_predictive(idata, extend_inferencedata=True)
 
 fig, axes = plt.subplots(1, 2, figsize=(12, 4))
 
@@ -144,6 +159,7 @@ plt.show()
 #  Uniform    → well calibrated`;
 
 const DECISION_CODE = `import numpy as np
+import pymc as pm
 
 # After MCMC we have 8000 samples from the posterior
 posterior_median = idata.posterior["median_duration"].values.flatten()
@@ -166,10 +182,24 @@ print(f"Posterior median (min absolute error): {decision_median:.2f} months")
 print(f"Posterior mode   (min 0-1 error):      {decision_mode:.2f} months")
 
 # ── Threshold decision: P(duration > 6 months) for clinical triage ──
-prob_long_covid = (posterior_median > 6).mean()
-print(f"\\nP(duration > 6 months) = {prob_long_covid:.1%}")
-# → "There is a 12% probability this patient will have symptoms > 6 months"
-# This is a direct, interpretable statement — impossible with p-values.`;
+# For a future patient, use the posterior predictive distribution,
+# not only the posterior over the population median.
+if "posterior_predictive" not in idata.groups():
+    with long_covid_model:
+        idata = pm.sample_posterior_predictive(
+            idata,
+            var_names=["obs"],
+            extend_inferencedata=True,
+            random_seed=42,
+        )
+
+posterior_predictive = idata.posterior_predictive["obs"].values.reshape(-1)
+prob_future_duration_gt_6 = (posterior_predictive > 6).mean()
+prob_population_median_gt_6 = (posterior_median > 6).mean()
+
+print(f"\\nP(future duration > 6 months | data) = {prob_future_duration_gt_6:.1%}")
+print(f"P(population median > 6 months | data) = {prob_population_median_gt_6:.1%}")
+# The first is a patient-level predictive probability; the second is a parameter probability.`;
 
 const PARETO_CODE = `import arviz as az
 import numpy as np
@@ -212,6 +242,37 @@ function ESSBadge({ v }: { v: number }) {
     </span>;
 }
 
+const DIAGNOSTIC_CARD_STYLES = {
+    blue: {
+        card: 'border-blue-100 bg-blue-50/40',
+        title: 'text-blue-800',
+        threshold: 'text-blue-700 bg-blue-100/60',
+    },
+    purple: {
+        card: 'border-purple-100 bg-purple-50/40',
+        title: 'text-purple-800',
+        threshold: 'text-purple-700 bg-purple-100/60',
+    },
+};
+
+const DECISION_CARD_STYLES = {
+    blue: {
+        card: 'border-blue-100 bg-blue-50/40',
+        title: 'text-blue-800',
+        optimal: 'text-blue-700',
+    },
+    purple: {
+        card: 'border-purple-100 bg-purple-50/40',
+        title: 'text-purple-800',
+        optimal: 'text-purple-700',
+    },
+    emerald: {
+        card: 'border-emerald-100 bg-emerald-50/40',
+        title: 'text-emerald-800',
+        optimal: 'text-emerald-700',
+    },
+};
+
 export function ChapterValidation() {
     const [showBad, setShowBad] = useState(false);
     const rows = showBad ? DIAGNOSTICS_BAD : DIAGNOSTICS_GOOD;
@@ -233,14 +294,14 @@ export function ChapterValidation() {
                 </p>
                 <div className="grid md:grid-cols-2 gap-4">
                     {[
-                        { title: 'R̂ (Gelman-Rubin)', color: 'blue', body: 'Compares within-chain vs between-chain variance. If all 4 chains converged, R̂ ≈ 1.000.', formula: '\\hat{R} = \\sqrt{\\frac{\\hat{V}}{W}}', thresh: 'R̂ < 1.01 required · R̂ > 1.05 = failure' },
-                        { title: 'ESS (Effective Sample Size)', color: 'purple', body: 'MCMC draws are autocorrelated — not truly independent. ESS is the equivalent number of independent samples.', formula: '\\text{ESS} = \\frac{N}{1 + 2\\sum_{k=1}^\\infty \\rho_k}', thresh: 'ESS > 400 per chain required' },
+                        { title: 'R̂ (Gelman-Rubin)', styles: DIAGNOSTIC_CARD_STYLES.blue, body: 'Compares within-chain vs between-chain variance. If all 4 chains converged, R̂ ≈ 1.000.', formula: '\\hat{R} = \\sqrt{\\frac{\\hat{V}}{W}}', thresh: 'R̂ < 1.01 required · R̂ > 1.05 = failure' },
+                        { title: 'ESS (Effective Sample Size)', styles: DIAGNOSTIC_CARD_STYLES.purple, body: 'MCMC draws are autocorrelated — not truly independent. ESS is the equivalent number of independent samples.', formula: '\\text{ESS} = \\frac{N}{1 + 2\\sum_{k=1}^\\infty \\rho_k}', thresh: 'ESS > 400 total minimum; more is better' },
                     ].map(c => (
-                        <div key={c.title} className={`p-5 rounded-xl border border-${c.color}-100 bg-${c.color}-50/40 space-y-3`}>
-                            <div className={`font-bold text-${c.color}-800`}>{c.title}</div>
+                        <div key={c.title} className={`p-5 rounded-xl border space-y-3 ${c.styles.card}`}>
+                            <div className={`font-bold ${c.styles.title}`}>{c.title}</div>
                             <p className="text-sm text-slate-600">{c.body}</p>
                             <BlockMath math={c.formula} />
-                            <div className={`text-xs font-semibold text-${c.color}-700 bg-${c.color}-100/60 px-3 py-1.5 rounded-lg`}>{c.thresh}</div>
+                            <div className={`text-xs font-semibold px-3 py-1.5 rounded-lg ${c.styles.threshold}`}>{c.thresh}</div>
                         </div>
                     ))}
                 </div>
@@ -356,14 +417,14 @@ export function ChapterValidation() {
                 <BlockMath math={`\\hat{\\theta}^* = \\argmin_{\\hat{\\theta}} \\; \\mathbb{E}_{\\theta|D}\\left[L(\\hat{\\theta}, \\theta)\\right]`} />
                 <div className="grid md:grid-cols-3 gap-4">
                     {[
-                        { loss: 'Squared Error', formula: '(\\hat{\\theta} - \\theta)^2', optimal: 'Posterior Mean', color: 'blue' },
-                        { loss: 'Absolute Error', formula: '|\\hat{\\theta} - \\theta|', optimal: 'Posterior Median', color: 'purple' },
-                        { loss: '0-1 Loss', formula: '\\mathbf{1}_{\\hat{\\theta} \\neq \\theta}', optimal: 'Posterior Mode', color: 'emerald' },
+                        { loss: 'Squared Error', formula: '(\\hat{\\theta} - \\theta)^2', optimal: 'Posterior Mean', styles: DECISION_CARD_STYLES.blue },
+                        { loss: 'Absolute Error', formula: '|\\hat{\\theta} - \\theta|', optimal: 'Posterior Median', styles: DECISION_CARD_STYLES.purple },
+                        { loss: '0-1 Loss', formula: '\\mathbf{1}_{\\hat{\\theta} \\neq \\theta}', optimal: 'Posterior Mode', styles: DECISION_CARD_STYLES.emerald },
                     ].map(d => (
-                        <div key={d.loss} className={`p-5 rounded-xl border border-${d.color}-100 bg-${d.color}-50/40`}>
-                            <div className={`font-bold text-${d.color}-800 text-sm mb-2`}>{d.loss}</div>
+                        <div key={d.loss} className={`p-5 rounded-xl border ${d.styles.card}`}>
+                            <div className={`font-bold text-sm mb-2 ${d.styles.title}`}>{d.loss}</div>
                             <BlockMath math={d.formula} />
-                            <div className="text-xs text-slate-500 mt-2">Optimal decision: <strong className={`text-${d.color}-700`}>{d.optimal}</strong></div>
+                            <div className="text-xs text-slate-500 mt-2">Optimal decision: <strong className={d.styles.optimal}>{d.optimal}</strong></div>
                         </div>
                     ))}
                 </div>
@@ -371,8 +432,8 @@ export function ChapterValidation() {
                 <div className="p-4 bg-blue-50 rounded-xl border border-blue-100 flex gap-3">
                     <Info size={16} className="shrink-0 text-blue-500 mt-0.5" />
                     <p className="text-sm text-slate-600">
-                        Unlike a frequentist analysis, the posterior allows direct probability statements:
-                        <em> "P(duration &gt; 6 months | data) = 12%."</em> This is directly actionable for clinical
+                        Unlike a frequentist analysis, the posterior predictive distribution allows direct probability statements:
+                        <em> "P(future duration &gt; 6 months | data, model) = 12%."</em> This is directly actionable for clinical
                         triage, resource allocation, and treatment decisions.
                     </p>
                 </div>
@@ -408,9 +469,9 @@ export function ChapterValidation() {
                 <div className="mt-6 p-6 bg-blue-50/50 rounded-2xl border border-blue-100/50 text-center">
                     <h4 className="text-lg font-bold text-blue-900 mb-2">Run the Full Analysis in Colab</h4>
                     <p className="text-blue-700/80 mb-5 text-sm max-w-lg mx-auto">
-                        All code from this guide is consolidated into a single annotated notebook with real-world data, all diagnostic plots, and model comparison.
+                        All code from this guide is consolidated into a single annotated notebook with realistic synthetic data, diagnostic plots, and model comparison.
                     </p>
-                    <a href="https://colab.research.google.com" target="_blank" rel="noreferrer"
+                    <a href="https://colab.research.google.com/github/Amirreza-0/bayesian-playground/blob/main/notebooks/long_covid_bayesian_workflow_colab.ipynb" target="_blank" rel="noreferrer"
                         className="inline-flex shadow-xl shadow-blue-500/20 items-center gap-2 px-8 py-3 bg-blue-600 text-white font-semibold rounded-full hover:bg-blue-700 transition-colors">
                         Launch Interactive Notebook
                     </a>

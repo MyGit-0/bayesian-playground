@@ -39,6 +39,7 @@ with pm.Model() as long_covid_model:
         target_accept=0.9,  # NUTS step-size tuning
         random_seed=42,
         return_inferencedata=True,
+        idata_kwargs={"log_likelihood": True},  # Needed for LOO/WAIC later
     )
 
 # ArviZ summary: the single most important diagnostic table
@@ -49,7 +50,7 @@ print(summary)
 #             mean    sd  hdi_3%  hdi_97%  r_hat  ess_bulk
 # log_mu      1.08  0.07    0.95     1.21   1.00      3890
 # obs_noise   0.59  0.05    0.50     0.68   1.00      4021
-# median_dur  2.95  0.21    2.57     3.36   1.00      3890`;
+# median_duration  2.95  0.21    2.57     3.36   1.00      3890`;
 
 const POSTERIOR_CODE = `import arviz as az
 import matplotlib.pyplot as plt
@@ -149,6 +150,27 @@ const MCMC_ALGOS = [
     { name: 'Sequential MC (SMC)', sampler: 'pm.sample_smc()', use: 'Multimodal posteriors, model evidence', pro: 'Handles multiple modes, computes marginal likelihood', con: 'Higher computational cost per sample' },
 ];
 
+const UPDATE_SUMMARY_STYLES = {
+    prior: {
+        card: 'bg-blue-50/60 border-blue-100',
+        label: 'text-blue-500',
+        value: 'text-blue-800',
+        sub: 'text-blue-400',
+    },
+    data: {
+        card: 'bg-slate-50/60 border-slate-100',
+        label: 'text-slate-500',
+        value: 'text-slate-800',
+        sub: 'text-slate-400',
+    },
+    posterior: {
+        card: 'bg-indigo-50/60 border-indigo-100',
+        label: 'text-indigo-500',
+        value: 'text-indigo-800',
+        sub: 'text-indigo-400',
+    },
+};
+
 export function ChapterInference({ priorMu, priorSigma, dataMu, setDataMu, dataSigma, setDataSigma }: Props) {
     const [activeAlgo, setActiveAlgo] = useState(2);
 
@@ -175,14 +197,14 @@ export function ChapterInference({ priorMu, priorSigma, dataMu, setDataMu, dataS
                     <BlockMath math={`\\mu_{\\text{post}} = \\frac{\\mu_0/\\sigma_0^2 + \\bar{x}/\\sigma_D^2}{1/\\sigma_0^2 + 1/\\sigma_D^2}`} />
                     <div className="grid grid-cols-3 gap-4 text-center text-sm">
                         {[
-                            { label: 'Prior Mean', val: priorMu.toFixed(2), sub: `σ₀ = ${priorSigma.toFixed(2)}`, color: 'blue' },
-                            { label: 'Data Mean', val: dataMu.toFixed(2), sub: `σ_D = ${dataSigma.toFixed(2)}`, color: 'slate' },
-                            { label: 'Posterior Mean', val: posteriorMu.toFixed(2), sub: `σ = ${posteriorSigma.toFixed(3)}`, color: 'indigo' },
+                            { label: 'Prior Mean', val: priorMu.toFixed(2), sub: `σ₀ = ${priorSigma.toFixed(2)}`, styles: UPDATE_SUMMARY_STYLES.prior },
+                            { label: 'Data Mean', val: dataMu.toFixed(2), sub: `σ_D = ${dataSigma.toFixed(2)}`, styles: UPDATE_SUMMARY_STYLES.data },
+                            { label: 'Posterior Mean', val: posteriorMu.toFixed(2), sub: `σ = ${posteriorSigma.toFixed(3)}`, styles: UPDATE_SUMMARY_STYLES.posterior },
                         ].map(c => (
-                            <div key={c.label} className={`p-4 rounded-xl bg-${c.color}-50/60 border border-${c.color}-100`}>
-                                <div className={`text-xs font-semibold uppercase tracking-wide text-${c.color}-500 mb-1`}>{c.label}</div>
-                                <div className={`text-3xl font-bold tabular-nums text-${c.color}-800`}>{c.val}</div>
-                                <div className={`text-xs font-mono text-${c.color}-400 mt-1`}>{c.sub}</div>
+                            <div key={c.label} className={`p-4 rounded-xl border ${c.styles.card}`}>
+                                <div className={`text-xs font-semibold uppercase tracking-wide mb-1 ${c.styles.label}`}>{c.label}</div>
+                                <div className={`text-3xl font-bold tabular-nums ${c.styles.value}`}>{c.val}</div>
+                                <div className={`text-xs font-mono mt-1 ${c.styles.sub}`}>{c.sub}</div>
                             </div>
                         ))}
                     </div>
@@ -306,8 +328,8 @@ export function ChapterInference({ priorMu, priorSigma, dataMu, setDataMu, dataS
                                     { col: 'mean / sd', mean: 'Posterior mean and standard deviation', thr: 'N/A (data-dependent)' },
                                     { col: 'hdi_3% / hdi_97%', mean: '94% Highest Density Interval (narrowest 94% probability mass)', thr: 'Should not include implausible values' },
                                     { col: 'r_hat (R̂)', mean: 'Gelman-Rubin: within-chain vs between-chain variance', thr: '< 1.01 required · > 1.05 = failure' },
-                                    { col: 'ess_bulk', mean: 'Effective sample size for bulk estimates (mean, HDI)', thr: '> 400 per chain (> 1600 total)' },
-                                    { col: 'ess_tail', mean: 'ESS for tail quantiles (5th / 95th percentile)', thr: '> 400 per chain' },
+                                    { col: 'ess_bulk', mean: 'Effective sample size for bulk estimates (mean, HDI)', thr: '> 400 total minimum; more is better' },
+                                    { col: 'ess_tail', mean: 'ESS for tail quantiles (5th / 95th percentile)', thr: '> 400 total minimum' },
                                 ].map(r => (
                                     <tr key={r.col} className="bg-white hover:bg-slate-50">
                                         <td className="p-3 text-indigo-600 font-semibold">{r.col}</td>

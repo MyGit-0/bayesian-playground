@@ -18,14 +18,14 @@ import arviz as az
 
 # ── Synthetic data (replace with your real dataset) ──────────────────
 rng = np.random.default_rng(42)
-# True underlying log-mean ≈ 1.1 → median duration ≈ 3 months
+# True underlying log-location ≈ 1.1 → median duration ≈ 3 months
 clinical_data = rng.lognormal(mean=1.1, sigma=0.6, size=80)
 
 # ── Bayesian Model ────────────────────────────────────────────────────
 with pm.Model() as long_covid_model:
 
     # --- Priors ---
-    # log_mu: prior on the log-scale mean. exp(log_mu) = median duration
+    # log_mu: prior on the log-scale location. exp(log_mu) = median duration
     log_mu    = pm.Normal("log_mu", mu=0, sigma=1)
 
     # obs_noise: SD on log-scale (must be positive → HalfNormal)
@@ -37,7 +37,7 @@ with pm.Model() as long_covid_model:
                        observed=clinical_data)
 
     # --- Derived quantity ---
-    # Back-transform to get the actual median duration in months
+    # Back-transform to get the population median duration in months
     median_duration = pm.Deterministic("median_duration",
                                        pm.math.exp(log_mu))`;
 
@@ -88,12 +88,12 @@ plt.title("Sensitivity Analysis: How prior width affects posterior log_mu")
 plt.show()`;
 
 const DIST_TABLE = [
-    { name: 'Normal', pkg: 'pm.Normal', domain: '(−∞, +∞)', use: 'Residuals, regression coefficients, log-transformed data', tag: 'Symmetric', col: 'blue' },
-    { name: 'LogNormal', pkg: 'pm.LogNormal', domain: '(0, +∞)', use: 'Durations, income, response times — positive & right-skewed', tag: 'Right-skewed', col: 'amber' },
-    { name: 'HalfNormal', pkg: 'pm.HalfNormal', domain: '(0, +∞)', use: 'Standard deviations, scale parameters — must be positive', tag: 'Scale', col: 'emerald' },
-    { name: 'Poisson', pkg: 'pm.Poisson', domain: '0, 1, 2, …', use: 'Event counts (hospitalisations per week)', tag: 'Counts', col: 'purple' },
-    { name: 'Beta', pkg: 'pm.Beta', domain: '(0, 1)', use: 'Proportions, recovery rates, probabilities', tag: 'Proportions', col: 'pink' },
-    { name: 'Bernoulli', pkg: 'pm.Bernoulli', domain: '{0, 1}', use: 'Binary outcomes (recovered / not recovered)', tag: 'Binary', col: 'indigo' },
+    { name: 'Normal', pkg: 'pm.Normal', domain: '(−∞, +∞)', use: 'Residuals, regression coefficients, log-transformed data', tag: 'Symmetric', tagClass: 'bg-blue-100 text-blue-700' },
+    { name: 'LogNormal', pkg: 'pm.LogNormal', domain: '(0, +∞)', use: 'Durations, income, response times — positive & right-skewed', tag: 'Right-skewed', tagClass: 'bg-amber-100 text-amber-700' },
+    { name: 'HalfNormal', pkg: 'pm.HalfNormal', domain: '(0, +∞)', use: 'Standard deviations, scale parameters — must be positive', tag: 'Scale', tagClass: 'bg-emerald-100 text-emerald-700' },
+    { name: 'Poisson', pkg: 'pm.Poisson', domain: '0, 1, 2, …', use: 'Event counts (hospitalisations per week)', tag: 'Counts', tagClass: 'bg-purple-100 text-purple-700' },
+    { name: 'Beta', pkg: 'pm.Beta', domain: '(0, 1)', use: 'Proportions, recovery rates, probabilities', tag: 'Proportions', tagClass: 'bg-pink-100 text-pink-700' },
+    { name: 'Bernoulli', pkg: 'pm.Bernoulli', domain: '{0, 1}', use: 'Binary outcomes (recovered / not recovered)', tag: 'Binary', tagClass: 'bg-indigo-100 text-indigo-700' },
 ];
 
 export function ChapterModelBuilding({ priorMu, setPriorMu, priorSigma, setPriorSigma }: Props) {
@@ -106,17 +106,17 @@ export function ChapterModelBuilding({ priorMu, setPriorMu, priorSigma, setPrior
                 <p className="text-[17px] text-slate-600 leading-[1.85]">
                     A Bayesian model is a mathematical story of how the observed data came to exist.
                     For our Long COVID-style study, we model individual patient symptom durations as draws
-                    from a <strong>LogNormal distribution</strong> whose log-scale mean and variance are
+                    from a <strong>LogNormal distribution</strong> whose log-scale location and variance are
                     themselves uncertain parameters. The dataset here is synthetic, but it is shaped to
                     behave like a plausible duration study.
                 </p>
                 <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4">
                     <div className="text-sm font-semibold text-slate-700">Our model in mathematical notation:</div>
                     {[
-                        { math: '\\log\\mu \\sim \\mathcal{N}(0, 1)', label: 'Prior on log-mean duration' },
+                        { math: '\\eta \\sim \\mathcal{N}(0, 1)', label: 'Prior on log-median duration (log_mu in code)' },
                         { math: '\\sigma_{\\text{obs}} \\sim \\text{HalfNormal}(1)', label: 'Prior on log-scale noise' },
-                        { math: 'x_i \\sim \\text{LogNormal}(\\log\\mu,\\; \\sigma_{\\text{obs}})', label: 'Likelihood — how data is generated' },
-                        { math: '\\mu_{\\text{median}} = e^{\\log\\mu}', label: 'Derived quantity — median duration in months' },
+                        { math: 'x_i \\sim \\text{LogNormal}(\\eta,\\; \\sigma_{\\text{obs}})', label: 'Likelihood — how data is generated' },
+                        { math: '\\mu_{\\text{median}} = e^{\\eta}', label: 'Derived quantity — median duration in months' },
                     ].map(eq => (
                         <div key={eq.math} className="grid grid-cols-[1fr_auto] items-center gap-4 p-3 rounded-lg border border-slate-100 bg-slate-50/50">
                             <BlockMath math={eq.math} />
@@ -155,7 +155,7 @@ export function ChapterModelBuilding({ priorMu, setPriorMu, priorSigma, setPrior
                                     <td className="p-4 font-mono text-xs text-slate-500">{d.domain}</td>
                                     <td className="p-4 text-slate-600 text-[13px]">{d.use}</td>
                                     <td className="p-4">
-                                        <span className={`px-2 py-0.5 rounded-full text-xs font-semibold bg-${d.col}-100 text-${d.col}-700`}>{d.tag}</span>
+                                        <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${d.tagClass}`}>{d.tag}</span>
                                     </td>
                                 </tr>
                             ))}
@@ -187,17 +187,17 @@ export function ChapterModelBuilding({ priorMu, setPriorMu, priorSigma, setPrior
             <section className="space-y-6 pt-6 border-t border-slate-100">
                 <h3 className="text-2xl font-bold text-slate-800">3. Prior Elicitation</h3>
                 <p className="text-[16px] text-slate-600 leading-relaxed">
-                    A prior on the <em>log-mean</em> <InlineMath math="\log\mu \sim \mathcal{N}(0, 1)" /> translates
-                    to a prior on the median duration of <InlineMath math="\exp(\log\mu)" />.
+                    A prior on the log-scale location <InlineMath math="\eta \sim \mathcal{N}(0, 1)" /> translates
+                    to a prior on the median duration of <InlineMath math="\exp(\eta)" />.
                     We put the prior on the log scale because raw symptom duration must stay positive.
-                    When <InlineMath math="\log\mu = 0" />, median duration = 1 month.
-                    When <InlineMath math="\log\mu = 1.1" />, median ≈ 3 months.
+                    When <InlineMath math="\eta = 0" />, median duration = 1 month.
+                    When <InlineMath math="\eta = 1.1" />, median ≈ 3 months.
                     Adjust the sliders below to explore how the prior shape changes.
                 </p>
                 <InteractivePriorSlider
                     mu={priorMu} sigma={priorSigma}
                     onChange={(m, s) => { setPriorMu(m); setPriorSigma(s); }}
-                    title="Shape Your Prior on the Log-Mean Duration"
+                    title="Shape Your Prior on the Log-Scale Location"
                     description="Narrow = confident beliefs. Wide = high uncertainty. The chart shows the implied prior distribution on the log-scale."
                 />
                 <CodeBlock code={FULL_MODEL_CODE} title="PyMC – Full Model Definition (complete, runnable)" />

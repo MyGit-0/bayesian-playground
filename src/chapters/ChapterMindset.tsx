@@ -3,7 +3,7 @@ import { InlineMath, BlockMath } from '../components/Maths';
 import { CodeBlock } from '../components/CodeBlock';
 import { BetaBinomialUpdater } from '../components/BetaBinomialUpdater';
 
-const BAYES_THEOREM_FORMULA = `P(\\theta \\mid D, M) = \\frac{P(D \\mid \\theta, M)\\; P(\\theta)}{P(D \\mid M)}`;
+const BAYES_THEOREM_FORMULA = `P(\\theta \\mid D, M) = \\frac{P(D \\mid \\theta, M)\\; P(\\theta \\mid M)}{P(D \\mid M)}`;
 const EVIDENCE_INTEGRAL = `P(D \\mid M) = \\int P(D \\mid \\theta, M)\\; P(\\theta)\\; d\\theta`;
 const CONJUGATE_NORMAL_MU = `\\mu_{\\text{post}} = \\frac{\\mu_0/\\sigma_0^2 + n\\bar{x}/\\sigma^2}{1/\\sigma_0^2 + n/\\sigma^2}`;
 const CONJUGATE_NORMAL_SIGMA = `\\sigma_{\\text{post}}^2 = \\left(\\frac{1}{\\sigma_0^2} + \\frac{n}{\\sigma^2}\\right)^{-1}`;
@@ -80,28 +80,49 @@ export function ChapterMindset() {
 
             {/* Bayes Theorem */}
             <section className="space-y-6 pt-6 border-t border-slate-100">
-                <h3 className="text-2xl font-bold text-slate-800">The Bayes Theorem</h3>
+                <h3 className="text-2xl font-bold text-slate-800">Bayes' Theorem</h3>
                 <p className="text-[16px] text-slate-600 leading-relaxed">
-                    The mathematical foundation of Bayesian inference is the Bayes theorem. 
+                    The mathematical foundation of Bayesian inference is Bayes' theorem. 
                     In the following, θ are the parameters we want to learn. D is the observed data. Every term is conditioned on our model M.
                 </p>
                  <div className="p-5 bg-indigo-50/80 rounded-xl border border-indigo-100 text-slate-700 text-[15px] leading-relaxed">
-                    <strong>Reading the formula:</strong> P denotes a probability. During Bayesian modeling, this always refers to a probability distribution, not a singular value.  E.g. P(θ) is read as "probability of θ" 
+                    <strong>Reading the formula:</strong> P denotes a probability mass or density, depending on whether the unknown is discrete or continuous.
+                    For continuous parameters, expressions such as P(θ) are shorthand for a density over possible θ values.
                     The vertical bar "|" is read as "given" or "conditional on".
                 </div>
                 <div className="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm space-y-6">
                     <BlockMath math={BAYES_THEOREM_FORMULA} />
                     <div className="grid md:grid-cols-4 gap-4 text-center text-sm">
                         {[
-                            { term: 'P(θ | D, M)', name: 'Posterior', color: 'black', desc: 'The probability of our parameters θ given the observed data D and model M' },
-                            { term: 'P(D | θ, M)', name: 'Likelihood', color: 'black', desc: 'How probable is D given a specific value of θ and model M?' },
-                            { term: 'P(θ | M)', name: 'Prior', color: 'black', desc: 'Our initial belief about θ before any data, given model M' },
-                            { term: 'P(D | M)', name: 'Evidence', color: 'gray', desc: 'Normalizing constant — the probability of D under all possible θ and model M' },
+                            {
+                                term: 'P(θ | D, M)',
+                                name: 'Posterior',
+                                desc: 'The distribution of parameters θ after conditioning on data D and model M',
+                                classes: { card: 'bg-blue-50/80 border-blue-100', term: 'text-blue-500', title: 'text-blue-800', desc: 'text-blue-700/80' },
+                            },
+                            {
+                                term: 'P(D | θ, M)',
+                                name: 'Likelihood',
+                                desc: 'How compatible D is with a specific value of θ under model M',
+                                classes: { card: 'bg-amber-50/80 border-amber-100', term: 'text-amber-500', title: 'text-amber-800', desc: 'text-amber-700/80' },
+                            },
+                            {
+                                term: 'P(θ | M)',
+                                name: 'Prior',
+                                desc: 'Our uncertainty about θ before seeing these data, given model M',
+                                classes: { card: 'bg-indigo-50/80 border-indigo-100', term: 'text-indigo-500', title: 'text-indigo-800', desc: 'text-indigo-700/80' },
+                            },
+                            {
+                                term: 'P(D | M)',
+                                name: 'Evidence',
+                                desc: 'Normalizing constant: the probability of D after averaging over θ',
+                                classes: { card: 'bg-slate-50/80 border-slate-100', term: 'text-slate-500', title: 'text-slate-800', desc: 'text-slate-600/80' },
+                            },
                         ].map(c => (
-                            <div key={c.name} className={`p-4 rounded-xl bg-${c.color}-50/80 border border-${c.color}-100`}>
-                                <div className={`font-mono text-xs mb-2 text-${c.color}-400`}>{c.term}</div>
-                                <div className={`font-bold text-${c.color}-800`}>{c.name}</div>
-                                <div className={`text-xs text-${c.color}-600/80 mt-2 leading-relaxed`}>{c.desc}</div>
+                            <div key={c.name} className={`p-4 rounded-xl border ${c.classes.card}`}>
+                                <div className={`font-mono text-xs mb-2 ${c.classes.term}`}>{c.term}</div>
+                                <div className={`font-bold ${c.classes.title}`}>{c.name}</div>
+                                <div className={`text-xs mt-2 leading-relaxed ${c.classes.desc}`}>{c.desc}</div>
                             </div>
                         ))}
                     </div>
@@ -168,11 +189,11 @@ export function ChapterMindset() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
-                            {[
+                    {[
                                 { concept: 'Probability', freq: 'Long-run frequency in repeated experiments', bayes: 'Degree of belief, quantified in [0, 1]' },
                                 { concept: 'Parameters', freq: 'Fixed unknown constants — not random variables', bayes: 'Random variables with probability distributions' },
                                 { concept: 'Output', freq: 'Point estimate + confidence interval + p-value', bayes: 'Full posterior distribution' },
-                                { concept: 'Prior knowledge', freq: 'Not incorporated (or via regularization, ad-hoc)', bayes: 'Explicitly encoded in the prior P(θ)' },
+                                { concept: 'Prior knowledge', freq: 'Not encoded as a probability prior; may enter through design, model constraints, or regularization', bayes: 'Explicitly encoded in the prior P(θ | M)' },
                                 { concept: 'Small samples', freq: 'Relies on asymptotic (large n) guarantees', bayes: 'Principled uncertainty even with n < 20' },
                                 { concept: 'Interval meaning', freq: '"95% of intervals computed this way contain θ"', bayes: '"P(θ ∈ HDI | data) = 94%"' },
                             ].map((r, i) => (
@@ -203,9 +224,9 @@ export function ChapterMindset() {
                     <div className="text-sm font-semibold text-slate-700">The generative process for our Long COVID model:</div>
                     <div className="space-y-2 text-sm text-slate-600">
                         {[
-                            { step: '1', label: 'Sample log-mean from prior', math: '\\log\\mu \\sim \\mathcal{N}(0, 1)' },
+                            { step: '1', label: 'Sample log-scale location from prior', math: '\\eta \\sim \\mathcal{N}(0, 1)' },
                             { step: '2', label: 'Sample noise from prior', math: '\\sigma_{\\text{obs}} \\sim \\text{HalfNormal}(1)' },
-                            { step: '3', label: 'Generate patient durations', math: 'x_i \\sim \\text{LogNormal}(\\log\\mu,\\; \\sigma_{\\text{obs}})' },
+                            { step: '3', label: 'Generate patient durations', math: 'x_i \\sim \\text{LogNormal}(\\eta,\\; \\sigma_{\\text{obs}})' },
                         ].map(item => (
                             <div key={item.step} className="flex items-start gap-4 p-3 bg-white rounded-lg border border-slate-100">
                                 <span className="w-7 h-7 rounded-full bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">{item.step}</span>
@@ -284,15 +305,15 @@ export function ChapterMindset() {
                 </p>
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     {[
-                        { icon: GitBranch, color: 'black', label: '1. Define Model', desc: 'Specify priors and likelihood based on domain knowledge. Priors are hypotheses, not arbitrary choices.' },
-                        { icon: BarChart2, color: 'black', label: '2. Prior Predictive', desc: 'Simulate data from the prior alone. Check that generated data is scientifically plausible.' },
-                        { icon: RefreshCw, color: 'black', label: '3. Fit & Diagnose', desc: 'Run MCMC. R̂ checks whether chains agree, ESS checks how many useful draws you have, and divergences warn that the sampler struggled with posterior geometry.' },
-                        { icon: CheckSquare, color: 'black', label: '4. Posterior Predictive', desc: 'Simulate from the posterior. Does the model replicate real data patterns? If not, revise.' },
-                    ].map(({ icon: Icon, color, label, desc }) => (
-                        <div key={label} className={`p-5 rounded-xl bg-${color}-50/70 border border-${color}-100`}>
-                            <Icon className={`text-${color}-500 mb-3`} size={20} />
-                            <div className={`font-bold text-${color}-800 text-sm mb-2`}>{label}</div>
-                            <div className={`text-xs text-${color}-700/80 leading-relaxed`}>{desc}</div>
+                        { icon: GitBranch, classes: { card: 'bg-blue-50/70 border-blue-100', icon: 'text-blue-500', title: 'text-blue-800', desc: 'text-blue-700/80' }, label: '1. Define Model', desc: 'Specify priors and likelihood based on domain knowledge. Priors are hypotheses, not arbitrary choices.' },
+                        { icon: BarChart2, classes: { card: 'bg-amber-50/70 border-amber-100', icon: 'text-amber-500', title: 'text-amber-800', desc: 'text-amber-700/80' }, label: '2. Prior Predictive', desc: 'Simulate data from the prior alone. Check that generated data is scientifically plausible.' },
+                        { icon: RefreshCw, classes: { card: 'bg-indigo-50/70 border-indigo-100', icon: 'text-indigo-500', title: 'text-indigo-800', desc: 'text-indigo-700/80' }, label: '3. Fit & Diagnose', desc: 'Run MCMC. R-hat checks whether chains agree, ESS checks how many useful draws you have, and divergences warn that the sampler struggled with posterior geometry.' },
+                        { icon: CheckSquare, classes: { card: 'bg-emerald-50/70 border-emerald-100', icon: 'text-emerald-500', title: 'text-emerald-800', desc: 'text-emerald-700/80' }, label: '4. Posterior Predictive', desc: 'Simulate from the posterior. Does the model replicate real data patterns? If not, revise.' },
+                    ].map(({ icon: Icon, classes, label, desc }) => (
+                        <div key={label} className={`p-5 rounded-xl border ${classes.card}`}>
+                            <Icon className={`${classes.icon} mb-3`} size={20} />
+                            <div className={`font-bold text-sm mb-2 ${classes.title}`}>{label}</div>
+                            <div className={`text-xs leading-relaxed ${classes.desc}`}>{desc}</div>
                         </div>
                     ))}
                 </div>

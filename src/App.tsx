@@ -105,6 +105,36 @@ function App() {
                         );
                     })}
                 </nav>
+
+                {/* Footer Attribution */}
+                <div className="px-5 py-4 border-t border-slate-100 shrink-0">
+                    <p className="text-[11px] text-slate-400 leading-relaxed">
+                        Made with ❤️ in<br />
+                        <span className="font-medium text-slate-500">Georg-August-Universität Göttingen</span>
+                        <br />
+                        <span className="italic">in publica commoda</span>
+                    </p>
+                    <p className="text-[11px] text-slate-400 mt-1.5">
+                        Authors:{' '}
+                        <a
+                            href="https://www.linkedin.com/in/amirreza-aleyasin/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-500 hover:text-blue-700 font-medium transition-colors underline-offset-2 hover:underline"
+                        >
+                            Amir
+                        </a>
+                        {' & '}
+                        <a
+                            href="https://www.linkedin.com/in/vera-gna%C3%9F-4b0b85279/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-500 hover:text-blue-700 font-medium transition-colors underline-offset-2 hover:underline"
+                        >
+                            Vera
+                        </a>
+                    </p>
+                </div>
             </motion.aside>
 
             {/* Main Content Area */}

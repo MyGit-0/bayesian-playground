@@ -13,14 +13,18 @@ export function HierarchicalModelingVisual() {
         { id: 'H4', name: 'Hospital D', n: 3, avg: 6.5 }, // Outlier with low N
     ];
 
-    const globalAvg = 3.1; // Complete pooling average
+    const axisMin = 2;
+    const axisMax = 7;
+    const globalAvg = groups.reduce((sum, group) => sum + group.avg * group.n, 0) /
+        groups.reduce((sum, group) => sum + group.n, 0);
+    const toAxisPct = (value: number) => ((value - axisMin) / (axisMax - axisMin)) * 100;
 
     // Target positions based on pooling type
     const getPositions = () => {
         switch (poolingType) {
             case 'complete': return [globalAvg, globalAvg, globalAvg, globalAvg];
             case 'no': return [3.2, 2.8, 4.1, 6.5];
-            case 'partial': return [3.18, 2.85, 3.8, 4.2]; // Shrinkage towards global mean
+            case 'partial': return [3.22, 2.9, 3.85, 4.25]; // Shrinkage towards global mean
         }
     };
 
@@ -53,7 +57,7 @@ export function HierarchicalModelingVisual() {
                 <div className="h-16">
                     {poolingType === 'complete' && (
                         <p className="text-slate-600 animate-in fade-in duration-300">
-                            <strong>Complete Pooling</strong> assumes every hospital is exactly identical. It ignores the specific groupings entirely and estimates one global average. It underfits by ignoring real regional differences.
+                            <strong>Complete Pooling</strong> assumes every hospital shares one population mean. It ignores the specific groupings entirely and estimates one weighted global average. It underfits by ignoring real regional differences.
                         </p>
                     )}
                     {poolingType === 'no' && (
@@ -63,7 +67,7 @@ export function HierarchicalModelingVisual() {
                     )}
                     {poolingType === 'partial' && (
                         <p className="text-slate-600 animate-in fade-in duration-300">
-                            <strong>Partial Pooling (Hierarchical)</strong> shares statistical strength. It honors the large data from Hospitals A & B, but aggressively "shrinks" the noisy outlier of Hospital D towards the global average.
+                            <strong>Partial Pooling (Hierarchical)</strong> shares statistical strength. It honors the larger samples from Hospitals A & B, while shrinking the noisy estimate for Hospital D toward the global average.
                         </p>
                     )}
                 </div>
@@ -71,14 +75,17 @@ export function HierarchicalModelingVisual() {
                 <div className="bg-slate-50 rounded-xl p-6 border border-slate-200 relative pt-12 pb-8">
                     {/* Global Average Line */}
                     <div className="absolute top-0 bottom-0 left-0 w-full flex items-center justify-center opacity-30 pointer-events-none">
-                        <div className="w-px h-full bg-slate-800 border-r border-dashed border-slate-400"></div>
+                        <div
+                            className="absolute top-0 bottom-0 w-px bg-slate-800 border-r border-dashed border-slate-400"
+                            style={{ left: `${toAxisPct(globalAvg)}%` }}
+                        />
                     </div>
 
                     {/* X Axis labels */}
-                    <div className="absolute top-4 left-0 w-full flex justify-between px-6 text-xs font-semibold text-slate-400">
-                        <span>Shorter Duration (2m)</span>
-                        <span>Global Avg (~3m)</span>
-                        <span>Longer Duration (7m)</span>
+                    <div className="absolute top-4 left-0 w-full px-6 text-xs font-semibold text-slate-400">
+                        <span className="absolute left-6">Shorter Duration (2m)</span>
+                        <span className="absolute -translate-x-1/2" style={{ left: `${toAxisPct(globalAvg)}%` }}>Global Avg ({globalAvg.toFixed(1)}m)</span>
+                        <span className="absolute right-6">Longer Duration (7m)</span>
                     </div>
 
                     <div className="space-y-6 mt-4 relative z-10">
@@ -96,7 +103,7 @@ export function HierarchicalModelingVisual() {
                                     {/* The raw data point (fixed) */}
                                     <div
                                         className="absolute top-1/2 w-2 h-2 rounded-full border-2 border-slate-400 bg-white -translate-y-1/2 -ml-1 z-0 opacity-50"
-                                        style={{ left: `${((group.avg - 2) / 5) * 100}%` }}
+                                        style={{ left: `${toAxisPct(group.avg)}%` }}
                                         title={`Raw Average: ${group.avg}`}
                                     ></div>
 
@@ -105,7 +112,7 @@ export function HierarchicalModelingVisual() {
                                         className={`absolute top-1/2 w-4 h-4 rounded-full -translate-y-1/2 -ml-2 z-10 shadow-md ${poolingType === 'complete' ? 'bg-blue-500' :
                                                 poolingType === 'no' ? 'bg-indigo-500' : 'bg-emerald-500'
                                             }`}
-                                        animate={{ left: `${((positions[i] - 2) / 5) * 100}%` }}
+                                        animate={{ left: `${toAxisPct(positions[i])}%` }}
                                         transition={{ type: 'spring', damping: 20, stiffness: 100 }}
                                     >
                                         {/* Connecting line to global mean during partial pooling */}

@@ -37,7 +37,7 @@ export function IterativeModelComparison() {
                             </div>
                         </div>
                         <div className="bg-emerald-50 text-emerald-800 p-4 rounded-lg flex items-start gap-3 border border-emerald-100">
-                            <div className="font-bold">LOO (Leave-One-Out) Score:</div>
+                            <div className="font-bold">ELPD-LOO:</div>
                             <div className="font-mono bg-white px-2 py-0.5 rounded border border-emerald-200">-1200.5</div>
                         </div>
                     </div>
@@ -58,11 +58,11 @@ export function IterativeModelComparison() {
                         </div>
                         <div className="bg-emerald-50 text-emerald-800 p-4 rounded-lg flex items-start gap-3 border border-emerald-100">
                             <div>
-                                <div className="font-bold flex items-center gap-2">LOO (Leave-One-Out) Score: <span className="text-xs bg-emerald-200 text-emerald-900 px-2 py-0.5 rounded-full">Winner</span></div>
+                                <div className="font-bold flex items-center gap-2">ELPD-LOO: <span className="text-xs bg-emerald-200 text-emerald-900 px-2 py-0.5 rounded-full">Winner</span></div>
                             </div>
                             <div className="font-mono bg-white px-2 py-0.5 rounded border border-emerald-200">-850.2</div>
                         </div>
-                        <p className="text-sm text-slate-500 italic mt-2">A higher LOO score suggests this model generalizes better to unseen data, so adding demographic predictors improved prediction rather than merely fitting noise.</p>
+                        <p className="text-sm text-slate-500 italic mt-2">On the log-score scale, higher ELPD-LOO suggests better expected out-of-sample prediction. Small differences should be judged against their standard errors.</p>
                     </div>
                 )}
             </div>

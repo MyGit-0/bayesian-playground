@@ -35,6 +35,13 @@ const build = (
 
 const X_MIN = -3, X_MAX = 20;
 
+const STAT_TEXT_CLASS: Record<string, string> = {
+    slate: 'text-slate-600',
+    emerald: 'text-emerald-600',
+    amber: 'text-amber-600',
+    red: 'text-red-600',
+};
+
 export function DistributionComparer() {
     const [logMu, setLogMu] = useState(1.1);   // log-mean
     const [logSigma, setLogSigma] = useState(0.6);   // log-sd
@@ -55,14 +62,14 @@ export function DistributionComparer() {
             m = Math.max(m, normalPDF(x, lnMean, lnSD));
         }
         return m * 1.15;
-    }, [logMu, logSigma, lnMean, lnSD]);
+    }, [logMu, logSigma, lnMean, lnSD, xMin, xMax]);
 
     const pathLN = useMemo(() =>
         build(x => lognormalPDF(x, logMu, logSigma), xMin, xMax, maxY, W, H),
-        [logMu, logSigma, maxY]);
+        [logMu, logSigma, xMin, xMax, maxY, W, H]);
     const pathN = useMemo(() =>
         build(x => normalPDF(x, lnMean, lnSD), xMin, xMax, maxY, W, H),
-        [lnMean, lnSD, maxY]);
+        [lnMean, lnSD, xMin, xMax, maxY, W, H]);
 
     // Fraction of Normal mass below 0 (impossible for durations)
     const negMass = useMemo(() => {
@@ -74,7 +81,7 @@ export function DistributionComparer() {
             sum += normalPDF(xv, lnMean, lnSD) * dx;
         }
         return Math.max(0, sum);
-    }, [lnMean, lnSD]);
+    }, [lnMean, lnSD, xMin]);
 
     const zeroLine = xMin < 0 ? ((0 - xMin) / (xMax - xMin)) * W : 0;
 
@@ -167,7 +174,7 @@ export function DistributionComparer() {
                 ].map(s => (
                     <div key={s.label} className="py-4 px-2">
                         <motion.div animate={{ scale: [1.05, 1] }} transition={{ duration: 0.3 }}
-                            className={`text-xl font-bold text-${s.color}-600 tabular-nums`}>
+                            className={`text-xl font-bold ${STAT_TEXT_CLASS[s.color]} tabular-nums`}>
                             {s.value}
                         </motion.div>
                         <div className="text-xs text-slate-400 font-medium mt-0.5">{s.label}</div>
