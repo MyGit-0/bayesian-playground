@@ -134,6 +134,16 @@ function App() {
                             Vera
                         </a>
                     </p>
+                    <p className="text-[11px] text-slate-400 mt-1.5">
+                        <a
+                            href="https://www.linkedin.com/in/mohammadreza-radnezhad-394056219/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-500 hover:text-blue-700 font-medium transition-colors underline-offset-2 hover:underline"
+                        >
+                            Mohammadreza
+                        </a>
+                    </p>
                 </div>
             </motion.aside>
 
